@@ -105,7 +105,7 @@ const Checkout: React.FC<CheckoutProps> = ({ isOpen, onClose, onBack }) => {
     
     try {
       const whatsappMessage = generateWhatsAppMessage();
-      const phoneNumber = "5491123456789"; // Reemplazar con el número real del negocio
+      const phoneNumber = "5493517716373"; // Reemplazar con el número real del negocio
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${whatsappMessage}`;
       
       // Simulate processing time

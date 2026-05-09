@@ -474,8 +474,10 @@ function CategoryItem({
 
 function ExtrasTab() {
   const groups = useStore((s) => s.extraGroups);
+  const categories = useStore((s) => s.categories);
   const upsert = useStore((s) => s.upsertExtraGroup);
   const remove = useStore((s) => s.deleteExtraGroup);
+  const [filterCatId, setFilterCatId] = useState<string | "all">("all");
 
   const addGroup = () => {
     upsert({
@@ -483,21 +485,63 @@ function ExtrasTab() {
       name: "Nuevo grupo",
       multi: true,
       options: [],
+      categoryIds: filterCatId !== "all" ? [filterCatId] : [],
     });
   };
 
+  const filteredGroups = filterCatId === "all" 
+    ? groups 
+    : groups.filter(g => g.categoryIds?.includes(filterCatId));
+
   return (
     <div>
-      <div className="mb-4 flex justify-end">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setFilterCatId("all")}
+            className={`rounded-full px-4 py-1.5 text-sm transition-colors ${
+              filterCatId === "all"
+                ? "bg-gold text-gold-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
+          >
+            Todos
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setFilterCatId(cat.id)}
+              className={`rounded-full px-4 py-1.5 text-sm transition-colors ${
+                filterCatId === cat.id
+                  ? "bg-gold text-gold-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
         <Button onClick={addGroup} className="bg-gold text-gold-foreground hover:bg-gold/90">
           <Plus className="mr-2 h-4 w-4" /> Nuevo grupo
         </Button>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        {groups.map((g) => (
-          <ExtraGroupCard key={g.id} group={g} onChange={upsert} onDelete={() => remove(g.id)} />
-        ))}
-      </div>
+
+      {filteredGroups.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {filteredGroups.map((g) => (
+            <ExtraGroupCard key={g.id} group={g} onChange={upsert} onDelete={() => remove(g.id)} />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-center">
+          <p className="text-muted-foreground">No hay grupos de extras en esta categoría.</p>
+          {filterCatId !== "all" && (
+            <Button variant="link" onClick={addGroup} className="mt-2 text-gold">
+              Crear el primero para {categories.find(c => c.id === filterCatId)?.name}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

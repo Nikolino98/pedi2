@@ -141,6 +141,7 @@ export const useStore = create<State & Actions>()(
           const formattedProduct: Product = {
             ...savedProduct,
             image: savedProduct.image_url,
+            categoryId: savedProduct.category_id,
             extraGroupIds: p.extraGroupIds, // Mantenemos estos ya que vienen del form
           };
 

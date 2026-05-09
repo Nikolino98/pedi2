@@ -36,6 +36,7 @@ export const supabaseService = {
     return data.map((p: any) => ({
       ...p,
       image: p.image_url,
+      categoryId: p.category_id,
       extraGroupIds: p.product_extra_groups?.map((eg: any) => eg.group_id) || [],
     })) as Product[];
   },
@@ -48,7 +49,11 @@ export const supabaseService = {
       .eq("id", 1)
       .single();
     if (error && error.code !== "PGRST116") throw error; // PGRST116 is "no rows returned"
-    return data as PaymentInfo | null;
+    if (!data) return null;
+    return {
+      ...data,
+      accountName: data.account_name,
+    } as PaymentInfo;
   },
 
   async upsertProduct(product: Product) {

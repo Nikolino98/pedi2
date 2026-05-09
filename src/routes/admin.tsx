@@ -339,32 +339,42 @@ function ProductDialog({
 
           <div>
             <Label>Grupos de extras disponibles</Label>
+            <p className="text-[10px] text-muted-foreground mt-1 mb-2">
+              Mostrando extras vinculados a la categoría seleccionada.
+            </p>
             <div className="mt-2 space-y-2">
-              {extraGroups.map((g) => {
-                const checked = draft.extraGroupIds.includes(g.id);
-                return (
-                  <label
-                    key={g.id}
-                    className="flex cursor-pointer items-center gap-3 rounded-lg border border-border px-3 py-2"
-                  >
-                    <Checkbox
-                      checked={checked}
-                      onCheckedChange={(v) =>
-                        setDraft({
-                          ...draft,
-                          extraGroupIds: v
-                            ? [...draft.extraGroupIds, g.id]
-                            : draft.extraGroupIds.filter((x) => x !== g.id),
-                        })
-                      }
-                    />
-                    <span className="text-sm">{g.name}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      {g.options.length} opciones
-                    </span>
-                  </label>
-                );
-              })}
+              {extraGroups
+                .filter((g) => !draft.categoryId || g.categoryIds?.includes(draft.categoryId))
+                .map((g) => {
+                  const checked = draft.extraGroupIds.includes(g.id);
+                  return (
+                    <label
+                      key={g.id}
+                      className="flex cursor-pointer items-center gap-3 rounded-lg border border-border px-3 py-2"
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) =>
+                          setDraft({
+                            ...draft,
+                            extraGroupIds: v
+                              ? [...draft.extraGroupIds, g.id]
+                              : draft.extraGroupIds.filter((x) => x !== g.id),
+                          })
+                        }
+                      />
+                      <span className="text-sm">{g.name}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {g.options.length} opciones
+                      </span>
+                    </label>
+                  );
+                })}
+              {extraGroups.filter((g) => !draft.categoryId || g.categoryIds?.includes(draft.categoryId)).length === 0 && (
+                <p className="text-sm text-muted-foreground italic text-center py-4 border border-dashed rounded-lg">
+                  No hay grupos de extras vinculados a esta categoría.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -501,6 +511,7 @@ function ExtraGroupCard({
   onChange: (g: ExtraGroup) => void;
   onDelete: () => void;
 }) {
+  const categories = useStore((s) => s.categories);
   const [draft, setDraft] = useState<ExtraGroup>(group);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -527,6 +538,14 @@ function ExtraGroupCard({
     update({ options: newOptions });
   };
 
+  const toggleCategory = (catId: string) => {
+    const current = draft.categoryIds || [];
+    const newCatIds = current.includes(catId)
+      ? current.filter((id) => id !== catId)
+      : [...current, catId];
+    update({ categoryIds: newCatIds });
+  };
+
   const handleSave = async () => {
     await onChange(draft);
     setHasChanges(false);
@@ -544,12 +563,43 @@ function ExtraGroupCard({
           <Trash2 className="h-4 w-4 text-destructive" />
         </Button>
       </div>
-      <label className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-        <Switch checked={draft.multi} onCheckedChange={(v) => update({ multi: v })} />
-        Selección múltiple
-      </label>
+      
+      <div className="mt-3 flex flex-wrap items-center gap-4">
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Switch checked={draft.multi} onCheckedChange={(v) => update({ multi: v })} />
+          Selección múltiple
+        </label>
+      </div>
 
-      <ul className="mt-4 space-y-2">
+      <div className="mt-4">
+        <Label className="text-xs uppercase tracking-widest text-muted-foreground">Categorías vinculadas</Label>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {categories.map((cat) => {
+            const active = draft.categoryIds?.includes(cat.id);
+            return (
+              <button
+                key={cat.id}
+                onClick={() => toggleCategory(cat.id)}
+                className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                  active
+                    ? "bg-gold text-gold-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                {cat.name}
+              </button>
+            );
+          })}
+          {(!categories || categories.length === 0) && (
+            <p className="text-xs text-muted-foreground italic">No hay categorías creadas</p>
+          )}
+        </div>
+        <p className="mt-1 text-[10px] text-muted-foreground">
+          Este grupo solo aparecerá en productos de las categorías seleccionadas.
+        </p>
+      </div>
+
+      <ul className="mt-6 space-y-2">
         {draft.options.map((o) => (
           <li key={o.id} className="flex items-center gap-2">
             <Input

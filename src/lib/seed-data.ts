@@ -22,6 +22,7 @@ export const seedExtraGroups: ExtraGroup[] = [
       { id: "o3", name: "Huevo frito", price: 700 },
       { id: "o4", name: "Cebolla caramelizada", price: 600 },
     ],
+    categoryIds: ["c1"],
   },
   {
     id: "g2",
@@ -32,6 +33,7 @@ export const seedExtraGroups: ExtraGroup[] = [
       { id: "p2", name: "A punto", price: 0 },
       { id: "p3", name: "Bien cocida", price: 0 },
     ],
+    categoryIds: ["c1"],
   },
   {
     id: "g3",
@@ -42,6 +44,7 @@ export const seedExtraGroups: ExtraGroup[] = [
       { id: "s2", name: "Mediana", price: 2500 },
       { id: "s3", name: "Familiar", price: 4500 },
     ],
+    categoryIds: ["c2"],
   },
 ];
 

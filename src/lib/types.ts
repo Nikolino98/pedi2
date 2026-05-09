@@ -9,6 +9,7 @@ export type ExtraGroup = {
   name: string;
   multi: boolean;
   options: ExtraOption[];
+  categoryIds: string[];
 };
 
 export type Product = {

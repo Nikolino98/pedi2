@@ -44,6 +44,13 @@ CREATE TABLE product_extra_groups (
   PRIMARY KEY (product_id, group_id)
 );
 
+-- Category <-> Extra Group (Many-to-Many)
+CREATE TABLE category_extra_groups (
+  category_id UUID REFERENCES categories(id) ON DELETE CASCADE NOT NULL,
+  group_id UUID REFERENCES extra_groups(id) ON DELETE CASCADE NOT NULL,
+  PRIMARY KEY (category_id, group_id)
+);
+
 -- Payment Info (Single row table)
 CREATE TABLE payment_info (
   id INTEGER PRIMARY KEY CHECK (id = 1), -- Ensure only one row
@@ -64,6 +71,7 @@ ALTER TABLE extra_groups ENABLE ROW LEVEL SECURITY;
 ALTER TABLE extra_options ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_extra_groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE category_extra_groups ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payment_info ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for public read access
@@ -72,6 +80,7 @@ CREATE POLICY "Allow public read access on extra_groups" ON extra_groups FOR SEL
 CREATE POLICY "Allow public read access on extra_options" ON extra_options FOR SELECT USING (true);
 CREATE POLICY "Allow public read access on products" ON products FOR SELECT USING (true);
 CREATE POLICY "Allow public read access on product_extra_groups" ON product_extra_groups FOR SELECT USING (true);
+CREATE POLICY "Allow public read access on category_extra_groups" ON category_extra_groups FOR SELECT USING (true);
 CREATE POLICY "Allow public read access on payment_info" ON payment_info FOR SELECT USING (true);
 
 -- Create policies for authenticated users (admin) to manage data
@@ -81,4 +90,5 @@ CREATE POLICY "Allow all access for admin on extra_groups" ON extra_groups FOR A
 CREATE POLICY "Allow all access for admin on extra_options" ON extra_options FOR ALL USING (true);
 CREATE POLICY "Allow all access for admin on products" ON products FOR ALL USING (true);
 CREATE POLICY "Allow all access for admin on product_extra_groups" ON product_extra_groups FOR ALL USING (true);
+CREATE POLICY "Allow all access for admin on category_extra_groups" ON category_extra_groups FOR ALL USING (true);
 CREATE POLICY "Allow all access for admin on payment_info" ON payment_info FOR ALL USING (true);

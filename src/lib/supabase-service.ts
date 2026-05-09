@@ -16,12 +16,13 @@ export const supabaseService = {
     if (!supabase) return [];
     const { data, error } = await supabase
       .from("extra_groups")
-      .select("*, extra_options(*)")
+      .select("*, extra_options(*), category_extra_groups(category_id)")
       .order("name");
     if (error) throw error;
     return data.map((g: any) => ({
       ...g,
       options: g.extra_options || [],
+      categoryIds: g.category_extra_groups?.map((ceg: any) => ceg.category_id) || [],
     })) as ExtraGroup[];
   },
 
@@ -155,10 +156,22 @@ export const supabaseService = {
       if (oError) throw oError;
     }
 
-    // Devuelve el grupo completo con sus opciones (necesario para el store)
+    // 3. Manage category relationships
+    await supabase.from("category_extra_groups").delete().eq("group_id", groupId);
+    if (group.categoryIds && group.categoryIds.length > 0) {
+      const { error: cegError } = await supabase.from("category_extra_groups").insert(
+        group.categoryIds.map((catId) => ({
+          group_id: groupId,
+          category_id: catId,
+        }))
+      );
+      if (cegError) throw cegError;
+    }
+
+    // Devuelve el grupo completo con sus opciones y categorías (necesario para el store)
     const { data: finalGroup, error: fError } = await supabase
       .from("extra_groups")
-      .select("*, extra_options(*)")
+      .select("*, extra_options(*), category_extra_groups(category_id)")
       .eq("id", groupId)
       .single();
     
@@ -167,6 +180,7 @@ export const supabaseService = {
     return {
       ...finalGroup,
       options: finalGroup.extra_options || [],
+      categoryIds: finalGroup.category_extra_groups?.map((ceg: any) => ceg.category_id) || [],
     } as ExtraGroup;
   },
 

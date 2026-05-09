@@ -54,7 +54,11 @@ export function ProductDialog({
   const unit = product.price + extras.reduce((a, e) => a + e.price, 0);
   const total = unit * qty;
 
+  const missingRequired = groups.filter((g) => g.required && (selected[g.id] ?? []).length === 0);
+  const canAdd = missingRequired.length === 0;
+
   const handleAdd = () => {
+    if (!canAdd) return;
     const item: CartItem = {
       id: crypto.randomUUID(),
       productId: product.id,
@@ -91,7 +95,14 @@ export function ProductDialog({
           {groups.map((g) => (
             <div key={g.id} className="mt-6">
               <div className="mb-2 flex items-center justify-between">
-                <h4 className="font-display text-lg">{g.name}</h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-display text-lg">{g.name}</h4>
+                  {g.required && (
+                    <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-destructive">
+                      Obligatorio
+                    </span>
+                  )}
+                </div>
                 <span className="text-xs uppercase tracking-wider text-muted-foreground">
                   {g.multi ? "Elige los que quieras" : "Elige uno"}
                 </span>
@@ -154,9 +165,10 @@ export function ProductDialog({
             </div>
             <Button
               onClick={handleAdd}
+              disabled={!canAdd}
               className="h-12 flex-1 rounded-full bg-gold text-gold-foreground hover:bg-gold/90"
             >
-              Agregar · {formatARS(total)}
+              {canAdd ? `Agregar · ${formatARS(total)}` : "Selecciona las opciones obligatorias"}
             </Button>
           </div>
         </div>

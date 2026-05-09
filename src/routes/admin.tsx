@@ -484,6 +484,7 @@ function ExtrasTab() {
       id: crypto.randomUUID(),
       name: "Nuevo grupo",
       multi: true,
+      required: false,
       options: [],
       categoryIds: filterCatId !== "all" ? [filterCatId] : [],
     });
@@ -612,6 +613,10 @@ function ExtraGroupCard({
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <Switch checked={draft.multi} onCheckedChange={(v) => update({ multi: v })} />
           Selección múltiple
+        </label>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Switch checked={draft.required} onCheckedChange={(v) => update({ required: v })} />
+          Obligatorio
         </label>
       </div>
 

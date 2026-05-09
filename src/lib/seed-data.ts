@@ -16,6 +16,7 @@ export const seedExtraGroups: ExtraGroup[] = [
     id: "g1",
     name: "Adicionales",
     multi: true,
+    required: false,
     options: [
       { id: "o1", name: "Queso cheddar extra", price: 800 },
       { id: "o2", name: "Bacon", price: 1200 },
@@ -28,6 +29,7 @@ export const seedExtraGroups: ExtraGroup[] = [
     id: "g2",
     name: "Punto de cocción",
     multi: false,
+    required: true,
     options: [
       { id: "p1", name: "Jugosa", price: 0 },
       { id: "p2", name: "A punto", price: 0 },
@@ -39,6 +41,7 @@ export const seedExtraGroups: ExtraGroup[] = [
     id: "g3",
     name: "Tamaño",
     multi: false,
+    required: true,
     options: [
       { id: "s1", name: "Personal", price: 0 },
       { id: "s2", name: "Mediana", price: 2500 },

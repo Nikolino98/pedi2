@@ -14,6 +14,7 @@ CREATE TABLE extra_groups (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   multi BOOLEAN DEFAULT false NOT NULL,
+  required BOOLEAN DEFAULT false NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

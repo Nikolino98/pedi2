@@ -131,6 +131,7 @@ export const supabaseService = {
     const groupData: any = {
       name: group.name,
       multi: group.multi,
+      required: group.required,
     };
 
     if (group.id && !group.id.startsWith("temp-")) {

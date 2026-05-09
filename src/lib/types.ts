@@ -8,6 +8,7 @@ export type ExtraGroup = {
   id: string;
   name: string;
   multi: boolean;
+  required: boolean;
   options: ExtraOption[];
   categoryIds: string[];
 };

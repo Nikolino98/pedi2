@@ -52,31 +52,46 @@ export const supabaseService = {
 
   async upsertProduct(product: Product) {
     if (!supabase) throw new Error("Supabase not initialized");
-    // 1. Upsert product
-    const { error: pError } = await supabase.from("products").upsert({
-      id: product.id || undefined,
+    
+    // Si el ID es un UUID temporal (ej. de crypto.randomUUID), intentamos upsert.
+    // Si es un producto nuevo sin ID, dejamos que Supabase lo genere.
+    const productData: any = {
       name: product.name,
       description: product.description,
       price: product.price,
       image_url: product.image,
       category_id: product.categoryId,
-    });
+    };
+
+    if (product.id && !product.id.startsWith("temp-")) {
+      productData.id = product.id;
+    }
+
+    const { data, error: pError } = await supabase
+      .from("products")
+      .upsert(productData)
+      .select()
+      .single();
+
     if (pError) throw pError;
+    const newProductId = data.id;
 
     // 2. Update many-to-many relationships for extras
     // Delete existing
-    await supabase.from("product_extra_groups").delete().eq("product_id", product.id);
+    await supabase.from("product_extra_groups").delete().eq("product_id", newProductId);
     
     // Insert new ones
     if (product.extraGroupIds.length > 0) {
       const { error: egError } = await supabase.from("product_extra_groups").insert(
         product.extraGroupIds.map((groupId) => ({
-          product_id: product.id,
+          product_id: newProductId,
           group_id: groupId,
         }))
       );
       if (egError) throw egError;
     }
+
+    return data;
   },
 
   async deleteProduct(id: string) {
@@ -106,14 +121,20 @@ export const supabaseService = {
 
   async upsertExtraGroup(group: ExtraGroup) {
     if (!supabase) throw new Error("Supabase not initialized");
+    
+    const groupData: any = {
+      name: group.name,
+      multi: group.multi,
+    };
+
+    if (group.id && !group.id.startsWith("temp-")) {
+      groupData.id = group.id;
+    }
+
     // 1. Upsert group
     const { data: gData, error: gError } = await supabase
       .from("extra_groups")
-      .upsert({
-        id: group.id || undefined,
-        name: group.name,
-        multi: group.multi,
-      })
+      .upsert(groupData)
       .select()
       .single();
     if (gError) throw gError;
@@ -133,6 +154,20 @@ export const supabaseService = {
       );
       if (oError) throw oError;
     }
+
+    // Devuelve el grupo completo con sus opciones (necesario para el store)
+    const { data: finalGroup, error: fError } = await supabase
+      .from("extra_groups")
+      .select("*, extra_options(*)")
+      .eq("id", groupId)
+      .single();
+    
+    if (fError) throw fError;
+
+    return {
+      ...finalGroup,
+      options: finalGroup.extra_options || [],
+    } as ExtraGroup;
   },
 
   async deleteExtraGroup(id: string) {

@@ -43,19 +43,37 @@ function Checkout() {
 
   const orderSummary = cart
     .map((i) => {
-      const extrasStr = i.extras.length ? ` (${i.extras.map((e) => e.name).join(", ")})` : "";
-      const notesStr = i.notes ? `\n   Nota: ${i.notes}` : "";
-      return `• ${i.qty}x ${i.name}${extrasStr}${notesStr}`;
+      const extras = i.extras.length ? ` (${i.extras.map((e) => e.name).join(", ")})` : "";
+      const note = i.notes ? ` [Nota: ${i.notes}]` : "";
+      return `• ${i.qty}x ${i.name}${extras}${note}`;
     })
     .join("\n");
 
   const message = encodeURIComponent(
     `Hola! Hice una transferencia por ${formatARS(total)}.\n\n` +
-      `Nombre: ${name}\n\nPedido:\n${orderSummary}\n\nAdjunto el comprobante 📎`
+      `👤 Nombre: ${name}\n\n` +
+      `📋 Pedido:\n${orderSummary}\n\n` +
+      `Adjunto el comprobante de transferencia 📎`
   );
-  const wa = `https://wa.me/${payment.whatsapp}?text=${message}`;
+  const waUrl = `https://wa.me/${payment.whatsapp}?text=${message}`;
 
   const canSubmit = name.trim().length >= 3;
+
+  const handleSendOrder = () => {
+    if (!canSubmit) {
+      toast.error("Por favor, ingresa tu nombre completo.");
+      return;
+    }
+    
+    // Abrir WhatsApp
+    window.open(waUrl, "_blank");
+    
+    // Limpiar carrito y volver al inicio después de un breve delay
+    setTimeout(() => {
+      clearCart();
+      navigate({ to: "/" });
+    }, 1500);
+  };
 
   return (
     <div className="mx-auto grid max-w-5xl gap-10 px-6 py-12 lg:grid-cols-[1fr_1fr]">
@@ -100,34 +118,21 @@ function Checkout() {
           <CopyRow label="Monto" value={String(total)} onCopy={(v) => copy(v, "amt")} copied={copied === "amt"} />
         </div>
 
-        <a 
-          href={canSubmit ? wa : undefined} 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className={`mt-6 block ${!canSubmit ? "cursor-not-allowed" : ""}`}
-          onClick={(e) => {
-            if (!canSubmit) {
-              e.preventDefault();
-              toast.error("Por favor, ingresa tu nombre para continuar.");
-            }
-          }}
-        >
+        <div className="mt-8">
           <Button
+            onClick={handleSendOrder}
             disabled={!canSubmit}
             className="h-12 w-full rounded-full bg-gold text-gold-foreground hover:bg-gold/90"
-            onClick={() => {
-              if (canSubmit) {
-                setTimeout(() => {
-                  clearCart();
-                  navigate({ to: "/" });
-                }, 1000);
-              }
-            }}
           >
             <MessageCircle className="mr-2 h-4 w-4" />
-            {canSubmit ? "Enviar comprobante por WhatsApp" : "Ingresa tu nombre"}
+            {canSubmit ? "Enviar comprobante por WhatsApp" : "Ingresa tu nombre para continuar"}
           </Button>
-        </a>
+          {!canSubmit && (
+            <p className="mt-3 text-center text-xs text-destructive">
+              El nombre es obligatorio para poder confirmar el pedido.
+            </p>
+          )}
+        </div>
         <p className="mt-3 text-center text-xs text-muted-foreground">
           Al enviar el comprobante, tu pedido será confirmado.
         </p>

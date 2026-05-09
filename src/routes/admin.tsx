@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Pencil, Plus, Trash2, ImageIcon, Lock } from "lucide-react";
 import { useStore, formatARS } from "@/lib/store";
-import type { ExtraGroup, ExtraOption, PaymentInfo, Product } from "@/lib/types";
+import type { Category, ExtraGroup, ExtraOption, PaymentInfo, Product } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -193,7 +193,6 @@ function ProductsTab() {
                       variant="ghost"
                       onClick={() => {
                         deleteProduct(p.id);
-                        toast.success("Producto eliminado");
                       }}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -255,7 +254,6 @@ function ProductDialog({
       return;
     }
     await upsert({ ...draft, id: draft.id || crypto.randomUUID() });
-    toast.success("Producto guardado");
     onOpenChange(false);
   };
 
@@ -411,7 +409,6 @@ function CategoriesTab() {
             if (!name.trim()) return;
             await add(name.trim());
             setName("");
-            toast.success("Categoría añadida");
           }}
           className="bg-gold text-gold-foreground hover:bg-gold/90"
         >
@@ -420,29 +417,46 @@ function CategoriesTab() {
       </div>
       <ul className="mt-4 space-y-2">
         {categories.map((c) => (
-          <li
-            key={c.id}
-            className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2"
-          >
-            <Input
-              value={c.name}
-              onChange={(e) => update(c.id, e.target.value)}
-              className="border-0 bg-transparent shadow-none focus-visible:ring-0"
-            />
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={async () => {
-                await remove(c.id);
-                toast.success("Categoría eliminada");
-              }}
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
-          </li>
+          <CategoryItem key={c.id} category={c} onUpdate={update} onDelete={remove} />
         ))}
       </ul>
     </div>
+  );
+}
+
+function CategoryItem({
+  category,
+  onUpdate,
+  onDelete,
+}: {
+  category: Category;
+  onUpdate: (id: string, name: string) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+}) {
+  const [name, setName] = useState(category.name);
+  const hasChanges = name !== category.name && name.trim() !== "";
+
+  return (
+    <li className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
+      <Input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="border-0 bg-transparent shadow-none focus-visible:ring-0"
+      />
+      {hasChanges && (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => onUpdate(category.id, name.trim())}
+          className="text-gold"
+        >
+          Guardar
+        </Button>
+      )}
+      <Button size="icon" variant="ghost" onClick={() => onDelete(category.id)}>
+        <Trash2 className="h-4 w-4 text-destructive" />
+      </Button>
+    </li>
   );
 }
 
@@ -487,21 +501,42 @@ function ExtraGroupCard({
   onChange: (g: ExtraGroup) => void;
   onDelete: () => void;
 }) {
-  const update = (patch: Partial<ExtraGroup>) => onChange({ ...group, ...patch });
-  const updateOpt = (id: string, patch: Partial<ExtraOption>) =>
-    update({ options: group.options.map((o) => (o.id === id ? { ...o, ...patch } : o)) });
-  const removeOpt = (id: string) =>
-    update({ options: group.options.filter((o) => o.id !== id) });
-  const addOpt = () =>
-    update({
-      options: [...group.options, { id: crypto.randomUUID(), name: "Nueva opción", price: 0 }],
-    });
+  const [draft, setDraft] = useState<ExtraGroup>(group);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const update = (patch: Partial<ExtraGroup>) => {
+    setDraft((prev) => ({ ...prev, ...patch }));
+    setHasChanges(true);
+  };
+
+  const updateOpt = (id: string, patch: Partial<ExtraOption>) => {
+    const newOptions = draft.options.map((o) => (o.id === id ? { ...o, ...patch } : o));
+    update({ options: newOptions });
+  };
+
+  const removeOpt = (id: string) => {
+    const newOptions = draft.options.filter((o) => o.id !== id);
+    update({ options: newOptions });
+  };
+
+  const addOpt = () => {
+    const newOptions = [
+      ...draft.options,
+      { id: crypto.randomUUID(), name: "Nueva opción", price: 0 },
+    ];
+    update({ options: newOptions });
+  };
+
+  const handleSave = async () => {
+    await onChange(draft);
+    setHasChanges(false);
+  };
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
       <div className="flex items-center gap-2">
         <Input
-          value={group.name}
+          value={draft.name}
           onChange={(e) => update({ name: e.target.value })}
           className="font-display text-lg"
         />
@@ -510,12 +545,12 @@ function ExtraGroupCard({
         </Button>
       </div>
       <label className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-        <Switch checked={group.multi} onCheckedChange={(v) => update({ multi: v })} />
+        <Switch checked={draft.multi} onCheckedChange={(v) => update({ multi: v })} />
         Selección múltiple
       </label>
 
       <ul className="mt-4 space-y-2">
-        {group.options.map((o) => (
+        {draft.options.map((o) => (
           <li key={o.id} className="flex items-center gap-2">
             <Input
               value={o.name}
@@ -534,9 +569,16 @@ function ExtraGroupCard({
           </li>
         ))}
       </ul>
-      <Button variant="outline" className="mt-3 w-full" onClick={addOpt}>
-        <Plus className="mr-2 h-4 w-4" /> Agregar opción
-      </Button>
+      <div className="mt-4 flex gap-2">
+        <Button variant="outline" className="flex-1" onClick={addOpt}>
+          <Plus className="mr-2 h-4 w-4" /> Opción
+        </Button>
+        {hasChanges && (
+          <Button onClick={handleSave} className="bg-gold text-gold-foreground hover:bg-gold/90">
+            Guardar
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -578,7 +620,6 @@ function PaymentTab() {
       <Button
         onClick={async () => {
           await update(draft);
-          toast.success("Datos de pago actualizados");
         }}
         className="bg-gold text-gold-foreground hover:bg-gold/90"
       >

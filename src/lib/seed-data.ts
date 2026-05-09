@@ -103,5 +103,5 @@ export const seedPayment: PaymentInfo = {
   alias: "pedi2.gourmet",
   cvu: "0000003100012345678901",
   accountName: "Pedi2 Gourmet S.A.",
-  whatsapp: "5491122334455",
+  whatsapp: "5493518173793",
 };

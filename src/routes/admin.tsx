@@ -719,6 +719,7 @@ function PaymentTab() {
       <Button
         onClick={async () => {
           await update(draft);
+          toast.success("Datos de pago actualizados");
         }}
         className="bg-gold text-gold-foreground hover:bg-gold/90"
       >

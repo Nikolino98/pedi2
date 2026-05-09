@@ -42,14 +42,20 @@ function Checkout() {
   };
 
   const orderSummary = cart
-    .map((i) => `• ${i.qty}x ${i.name}${i.extras.length ? ` (${i.extras.map((e) => e.name).join(", ")})` : ""}`)
+    .map((i) => {
+      const extrasStr = i.extras.length ? ` (${i.extras.map((e) => e.name).join(", ")})` : "";
+      const notesStr = i.notes ? `\n   Nota: ${i.notes}` : "";
+      return `• ${i.qty}x ${i.name}${extrasStr}${notesStr}`;
+    })
     .join("\n");
 
   const message = encodeURIComponent(
     `Hola! Hice una transferencia por ${formatARS(total)}.\n\n` +
-      `Nombre: ${name || "—"}\n\nPedido:\n${orderSummary}\n\nAdjunto el comprobante 📎`
+      `Nombre: ${name}\n\nPedido:\n${orderSummary}\n\nAdjunto el comprobante 📎`
   );
   const wa = `https://wa.me/${payment.whatsapp}?text=${message}`;
+
+  const canSubmit = name.trim().length >= 3;
 
   return (
     <div className="mx-auto grid max-w-5xl gap-10 px-6 py-12 lg:grid-cols-[1fr_1fr]">
@@ -61,27 +67,22 @@ function Checkout() {
 
         <div className="mt-8 space-y-4">
           <div>
-            <Label htmlFor="name">Nombre</Label>
+            <Label htmlFor="name" className="flex items-center justify-between">
+              Nombre
+              <span className="text-[10px] font-bold uppercase tracking-wider text-destructive">Obligatorio</span>
+            </Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={80}
-              placeholder="Tu nombre"
-              className="mt-2"
+              placeholder="Ingresa tu nombre completo"
+              className={`mt-2 ${!canSubmit && name.length > 0 ? "border-destructive focus-visible:ring-destructive" : ""}`}
             />
+            {!canSubmit && name.length > 0 && (
+              <p className="mt-1 text-xs text-destructive">El nombre debe tener al menos 3 caracteres.</p>
+            )}
           </div>
-          {/* <div>
-            <Label htmlFor="addr">Dirección de entrega</Label>
-            <Input
-              id="addr"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              maxLength={200}
-              placeholder="Calle, número, piso..."
-              className="mt-2"
-            />
-          </div> */}
         </div>
       </div>
 
@@ -99,18 +100,32 @@ function Checkout() {
           <CopyRow label="Monto" value={String(total)} onCopy={(v) => copy(v, "amt")} copied={copied === "amt"} />
         </div>
 
-        <a href={wa} target="_blank" rel="noopener noreferrer" className="mt-6 block">
+        <a 
+          href={canSubmit ? wa : undefined} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className={`mt-6 block ${!canSubmit ? "cursor-not-allowed" : ""}`}
+          onClick={(e) => {
+            if (!canSubmit) {
+              e.preventDefault();
+              toast.error("Por favor, ingresa tu nombre para continuar.");
+            }
+          }}
+        >
           <Button
+            disabled={!canSubmit}
             className="h-12 w-full rounded-full bg-gold text-gold-foreground hover:bg-gold/90"
             onClick={() => {
-              setTimeout(() => {
-                clearCart();
-                navigate({ to: "/" });
-              }, 1000);
+              if (canSubmit) {
+                setTimeout(() => {
+                  clearCart();
+                  navigate({ to: "/" });
+                }, 1000);
+              }
             }}
           >
             <MessageCircle className="mr-2 h-4 w-4" />
-            Enviar comprobante por WhatsApp
+            {canSubmit ? "Enviar comprobante por WhatsApp" : "Ingresa tu nombre"}
           </Button>
         </a>
         <p className="mt-3 text-center text-xs text-muted-foreground">

@@ -46,10 +46,10 @@ function Checkout() {
     .join("\n");
 
   const message = encodeURIComponent(
-    `Hola! Hice una transferencia por ${formatARS(total)} a Pedi2.\n\n` +
+    `Hola! Hice una transferencia por ${formatARS(total)}.\n\n` +
       `Nombre: ${name || "—"}\n\nPedido:\n${orderSummary}\n\nAdjunto el comprobante 📎`
   );
-  const wa = `https://wa.me/5493518173793/${payment.whatsapp}?text=${message}`;
+  const wa = `https://wa.me/${payment.whatsapp}?text=${message}`;
 
   return (
     <div className="mx-auto grid max-w-5xl gap-10 px-6 py-12 lg:grid-cols-[1fr_1fr]">
